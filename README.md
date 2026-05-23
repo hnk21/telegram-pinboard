@@ -9,31 +9,29 @@ https://docs.python-telegram-bot.org/en/v21.8/index.html
 
 --------------------------------------------------
 
-# Idea Backlog
- 
+# To Update Backlog
+
 - **AI node**
     - Google Gemini
     - Prepare different rules to control the response allowed for the LLM, each catered to specific answer requirements
         - General query
         - News article summariser
         - Answer as a certain character (e.g. Chainsawman Pochita)
+- **Expense node**
+    - Try API to Microsoft OneDrive and update my actual expense Excel
+        - https://learn.microsoft.com/en-us/graph/api/resources/onedrive?view=graph-rest-1.0&viewFallbackFrom=odsp-graph-online
+    - Analysis, matplotlib
+        - Amount spent over each month
+- **Sleep node**
+    - Data logging from .txt to .db sqlite3
+    - Analysis, matplotlib
+        - Plot sleep start times
 - **Notion node**
     - akr workspace > 2_BUNKA > Japanese vocab training
         - Return overall result of practice (which words ok, which words redo)
     - akr workspace > 1_EVENTS
         - Fetch today's events
         - Fetch this week's events
-- Convert data logging from .txt to .db sqlite3
-    - Expense node
-    - Sleep node
-- Expense node
-    - Analysis
-        - Amount spent over each month, return .png of chart
-    - Edit log
-- Sleep node
-    - Analysis
-        - Average sleep start time
-    - Edit log
 
 --------------------------------------------------
 
@@ -76,27 +74,15 @@ Pulls news article titles and links from selected sites.
 Integration with personal Notion workspace.
 
 ### /steam
+Fetch my Steam account's info via REST API calls.
 
 ### /ai
+Google Gemini LLM, feed specific prompt rules for certain actions (Search, Summarise, Check)
 
 ### /sleep
 For logging sleep timings.
 
-- /sleep_add
-    - Add a sleep timing to a sleep log file.
-- /sleep_view
-    - Returns the entire sleep log.
-- /sleep_clear
-    - Clears the sleep log file. Manually typed command.
-
 ### /expense
 For logging simple expenses.
-
-- /expense_add
-    - Add an expense.
-- /expense_view
-    - Get total expenses for a inputted year-month.
-- /expense_clear
-    - Clears the expense log file, Manually typed command.
 
 --------------------------------------------------

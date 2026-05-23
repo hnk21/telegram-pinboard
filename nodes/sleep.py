@@ -1,7 +1,16 @@
 from utility.helper import *
 
 # States
-SLEEPMENU, SLEEPADD = range(2)
+SLEEPMENU, SLEEPADD, SLEEPVIEW, SLEEPCLEAR = range(4)
+
+# Keyboard reply
+reply_keyboard_confirm = [["◯", "✕"]]
+
+# Sleep log
+sleeplog_path = check_file(file = sleep_log, folder_path = data_path)
+
+# Global variables
+next_date = date.today()
 
 # -------------------------------------------------- #
 # Main node menu                                     #
@@ -9,10 +18,10 @@ SLEEPMENU, SLEEPADD = range(2)
 
 async def sleep_node(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
-    print(f"\n>> sleep_node.py > sleep_node > User: {user["username"]}")
     name, username = user["first_name"], user["username"]
+    print(f"\n>> sleep_node.py > sleep_node > User: {username}")
     if username == master:
-        message = "\n".join(["Welcome to the sleep node",
+        message = "\n".join(["- sleep node -",
                             "/add - Add sleep timings",
                             "/view - View sleep log",
                             "/cancel - Exit node"
@@ -23,141 +32,176 @@ async def sleep_node(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return SLEEPMENU
 
 # -------------------------------------------------- #
-# State functions                                    #
+# Functions for adding sleep records                 #
 # -------------------------------------------------- #
 
 async def sleep_add(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    result = sleep_manager(command = "get", subcommand = "last", input = None)
     global next_date
+    last_date = sleep_get_last_date()
 
-    # Sleep log is empty
-    if result == None:
-        next_date = datetime.now().strftime("%Y%m%d")
-        next_date = date.strptime(next_date, "%Y%m%d")
-        message = "\n".join([f"Sleep log is empty",
-                            f"Enter new sleep timings (24h format, ',' separated) from: {next_date}"
-                            ])
     # Sleep log not empty
+    if last_date:
+        message = f"Latest date in sleep log: {last_date}"
+        next_date = last_date + timedelta(days = 1)
+    # Sleep log empty
     else:
-        last_date = result
-        next_date = last_date + timedelta(days=1)
-        message = "\n".join([f"Last date in sleep log: {last_date}",
-                            f"Enter new sleep timings (24h format, ',' separated) from: {next_date}"
-                            ])
-    await update.message.reply_text(message, reply_markup=ReplyKeyboardRemove())
+        message = "Sleep log is empty"
+    
+    await update.message.reply_text(message)
+    
+    message = "\n".join([f"Enter new sleep timings from {next_date}",
+                       "(hhmm ',' separated)"
+                       ])
+    await update.message.reply_text(message, reply_markup = ReplyKeyboardRemove())
     return SLEEPADD
 
 async def sleep_add_update(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    new_times = update.message.text
-    message = f"Updating sleep log, starting from {next_date}..."
+    sleep_times = update.message.text
+    message = f"Updating sleep log from {next_date}..."
     await update.message.reply_text(message)
-    success = sleep_manager("add", None, [next_date, new_times])
+    success = sleep_update(from_date = next_date, new_times = sleep_times)
     message = "ok" if success else "failed"
     await update.message.reply_text(message)
     return SLEEPMENU
+
+def sleep_get_last_date():
+    print(f">> sleep_node.py > sleep_get_last_date")
+    try:
+        if os.path.getsize(sleeplog_path) == 0:
+            print("> Sleep log is empty")
+            return False
+        else:
+            with open(sleeplog_path, "r") as log:
+                records = log.readlines()
+                last_date = records[-1].split(",")[0]
+            last_date = date(int(last_date[0:4]), int(last_date[5:7]), int(last_date[8:10]))
+            return last_date
+    except Exception as e:
+        print(f"> Error: {e}")
+        return False
+
+def sleep_update(from_date: str, new_times: str):
+    print(f">> sleep_node.py > sleep_update")
+    try:
+        # Split the input string into a list ',' delimiter
+        curr_date = from_date
+        new_times = new_times.split(",")
+        with open(sleeplog_path, "a") as log:
+            for time in new_times:
+                log.write(f"{curr_date},{time}\n")
+                curr_date += timedelta(days = 1)
+        print(f"> Updated {sleeplog_path}")
+        return True
+    except Exception as e:
+        print(f"> Error: {e}")
+        return False
+
+# -------------------------------------------------- #
+# Functions for fetching from sleep log              #
+# -------------------------------------------------- #
 
 async def sleep_view(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = "Fetching all sleep timings..."
-    await update.message.reply_text(message)
-    sleep_log = sleep_manager(command = "get", subcommand = "all", input = None)
-    if sleep_log:
-        message = sleep_log[0]
-        await update.message.reply_text(message)
-        message = "\n".join(sleep_log[1:])
+    dates = sleep_get_dates()
+    if dates:
+        global first_date, last_date
+        first_date, last_date = dates[0], dates[1]
+        message = f"Enter a date 'yyyymmdd' between {first_date} and {last_date} to retrieve the sleep timings from"
+        await update.message.reply_text(message, reply_markup = ReplyKeyboardRemove())
+        return SLEEPVIEW
     else:
         message = "Sleep log is empty"
-    await update.message.reply_text(message)
+        await update.message.reply_text(message)
+        return SLEEPMENU
+
+async def sleep_view_get(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    from_date = update.message.text
+    dt_from = date(int(from_date[0:4]), int(from_date[4:6]), int(from_date[6:8]))
+    if dt_from < first_date or dt_from > last_date:
+        message = "Input date does not exist in sleep log"
+        await update.message.reply_text(message)
+    else:
+        from_date = from_date[0:4] + "-" + from_date[4:6] + "-" + from_date[6:8]
+        message = f"Retrieving sleep logs from {from_date}..."
+        await update.message.reply_text(message)
+        result = sleep_fetch(from_date = from_date)        
+        if result:
+            await update.message.reply_text(result)
+        else:
+            await update.message.reply_text("failed")
     return SLEEPMENU
 
-async def sleep_clear(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = "Clearing sleep log..."
-    await update.message.reply_text(message)
-    success = sleep_manager(command = "clear", subcommand = None, input = None)
-    message = "ok" if success else "failed"
-    await update.message.reply_text(message)
-    return SLEEPMENU
-
-# -------------------------------------------------- #
-# Function for handling sleep data                   #
-# -------------------------------------------------- #
-
-def sleep_manager(command: str, subcommand: str, input: str):
-    print(f"\n>> sleep_node.py > sleep_manager")
-
+def sleep_get_dates():
+    print(f">> sleep_node.py > sleep_get_dates")
     try:
-        log_path = check_file(file=sleep_log, folder_path=data_path)
-        if command == "add":
-            # Split the input string into a list, ',' as delimiter
-            curr_date = input[0]
-            times = input[1].split(",")
-            # Update .txt
-            with open(log_path, "a") as log:
-                for new_time in times:
-                    log.write(f"{curr_date},{new_time}\n")
-                    curr_date += timedelta(days=1)
-            
-            ### To convert sleep log from .txt to .db sqlite
-            # Update .db
-            # ...
-            
-            print(f"> Updated {log_path}")
-            return True
-        
-        elif command == "get":
-            # Check if log file is empty
-            if os.path.getsize(log_path) == 0:
-                print("> Sleep log is empty")
-            else:
-                # Fetch from .txt
-                with open(log_path, "r") as log:
-                    # Return the last date in sleep log
-                    if subcommand == "last":
-                        last_date = log.readlines()[-1].split(":")[0]
-                        y, m, d = int(last_date[0:4]), int(last_date[5:7]), int(last_date[8:10])
-                        last_date = date(y, m, d)
-                        return last_date
-                    elif subcommand == "all":
-                        result = []
-                        i = 0
-                        log = log.readlines()
-                        log_size = len(log)
-                        for line in log:
-                            date_str, time_str = line.split(",")
-                            if i == 0:
-                                date_start = date_str
-                            # Return all records
-                            result.append(f"{time_str[0:2]}:{time_str[2:4]}")
-                            i += 1
-                        date_end = date_str
-                        result.insert(0, f"Found {log_size} records from {date_start} > {date_end}")
-                        return result
-                    elif subcommand == "recent":
-                        result = []
-                        i = 0
-                        log = log.readlines()
-                        log_size = len(log)
-                        for line in log:
-                            date_str, time_str = line.split(",")
-                            if i == 0:
-                                date_start = date_str
-                            # Return only last 10 records
-                            elif log_size - i <= 10:
-                                result.append(f"{time_str[0:2]}:{time_str[2:4]}")
-                            else:
-                                break
-                            i += 1
-                        date_end = date_str
-                        result.insert(0, f"Found {log_size} records from {date_start} > {date_end}")
-                        return result
-                
-                # Fetch from .db
-                # ...
+        if os.path.getsize(sleeplog_path) == 0:
+            print("> Sleep log empty")
+            return False
+        else:
+            with open(sleeplog_path, "r") as log:
+                records = log.readlines()
+                first_date = records[0].split(",")[0]
+                last_date = records[-1].split(",")[0]
+            first_date = date(int(first_date[0:4]), int(first_date[5:7]), int(first_date[8:10]))
+            last_date = date(int(last_date[0:4]), int(last_date[5:7]), int(last_date[8:10]))
+            return [first_date, last_date]
+    except Exception as e:
+        print(f"> Error: {e}")
+        return False
 
-        elif command == "clear":
-            with open(log_path, "w") as log:
-                log.truncate(0)
-            print(f"> Cleared {log_path}")
-            return True
+def sleep_fetch(from_date: str):
+    print(f">> sleep_node.py > sleep_fetch")
+    try:
+        with open(sleeplog_path, "r") as log:
+            result = []
+            records = log.readlines()
+            log_size = len(records)
+
+            for i in range(log_size - 1, -1, -1):
+                sleep_entry = records[i]
+                date_str, time_str = sleep_entry.split(",")
+                if i == log_size - 1:
+                    end_date = date_str
+                result.append(f"{time_str[0:2]}:{time_str[2:4]}")
+                if date_str == from_date:
+                    break
+        if len(result) > 1:
+            result.reverse()
+            result.insert(0, f"{len(result)} record(s) from {from_date} > {end_date}")
+        else:
+            result.insert(0, f"Record for {from_date}")
+        return "\n".join(result)
+    except Exception as e:
+        print(f"> Error: {e}")
+        return False
+
+# -------------------------------------------------- #
+# Functions for clearing sleep log                   #
+# -------------------------------------------------- #
+
+async def sleep_clear_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message = "Clear sleep log - Are you sure?"
+    await update.message.reply_text(message, reply_markup = ReplyKeyboardMarkup(reply_keyboard_confirm, resize_keyboard = True, one_time_keyboard = False))
+    return SLEEPCLEAR
+
+async def sleep_clear_execute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    confirm = update.message.text
+    if confirm == "◯":
+        message = "Clearing expense log..."
+        await update.message.reply_text(message)
+        success = sleep_clear()
+        message = "ok" if success else "failed"
+    else:
+        message = "Clear cancelled"
+    await update.message.reply_text(message, reply_markup = ReplyKeyboardRemove())
+    return SLEEPMENU
+
+def sleep_clear():
+    print(">> sleep_node.py > sleep_clear")
+    try:
+        with open(sleeplog_path, "w") as log:
+            log.truncate(0)
+        print(f"> Cleared {sleeplog_path}")
+        return True
     except Exception as e:
         print(f"> Error: {e}")
         return False

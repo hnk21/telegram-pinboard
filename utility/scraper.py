@@ -5,7 +5,7 @@ from utility.helper import *
 # -------------------------------------------------- #
 
 async def scrape_html(url: str, html_path: str) -> bool:
-    print(f"\n>> scraper.py > scrape_html\n> Connecting to '{url}'...")
+    print(f">> scraper.py > scrape_html\n> Connecting to '{url}'...")
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -31,7 +31,7 @@ async def parse_html_cna():
     print(f"\n>> scraper.py > parse_html_cna")
     
     file_path = check_file(file = cna_html, folder_path = html_folder_path)
-    success = asyncio.get_event_loop().create_task(scrape_html(url=cna_url, html_path=file_path))
+    success = asyncio.get_event_loop().create_task(scrape_html(url = cna_url, html_path = file_path))
     await success
 
     if success:    
@@ -40,8 +40,8 @@ async def parse_html_cna():
         
         soup = BeautifulSoup(html_content, 'html.parser')
 
-        ## Grab tags with attribute 'data-category' that are in defined categories
-        ## Then get attributes 'data-category', 'data-heading', 'data-link_absolute'
+        # Grab tags with attribute 'data-category' that are in defined categories
+        # Then get attributes 'data-category', 'data-heading', 'data-link_absolute'
         categories = ["Business", "World", "Asia", "East Asia"]
         tags = soup(attrs={"data-category": categories})
         news_dict = defaultdict(list)
@@ -51,13 +51,13 @@ async def parse_html_cna():
             title    = tag["data-heading"]
             news_dict[category].append([title, link])
         
-        ## Save news_dict into .json
+        # Save news_dict into .json
         with open(json_folder_path + "/" + cna_json, 'w') as file:
-            json.dump(news_dict, file, indent=4)
+            json.dump(news_dict, file, indent = 4)
         
         print(f"> Updated {cna_json} in {data_path}")
     else:
-        print(f"> Could not scrape_html from '{cna_url}'")
+        print(f"> Could not scrape from '{cna_url}'")
 
 # -------------------------------------------------- #
 # Ground News HTML Scraper                           #
@@ -73,7 +73,7 @@ async def parse_html_gn():
         gn_html = "news_gn_" + topic + ".html"
         file_path = check_file(file = gn_html, folder_path = html_folder_path)
 
-        success = asyncio.get_event_loop().create_task(scrape_html(url=gn_url_topic, html_path=file_path))
+        success = asyncio.get_event_loop().create_task(scrape_html(url = gn_url_topic, html_path = file_path))
         await success
 
         if success:
@@ -98,11 +98,11 @@ async def parse_html_gn():
                     title = " ".join( [word.capitalize() for word in link[9:].split("-")] )
                     news_dict[gn_topics[topic]].append([title, gn_base + link])
         else:
-            print(f"> Could not scrape_html from '{gn_url_topic}' ...")
+            print(f"> Could not scrape from '{gn_url_topic}' ...")
         
-    ## Save news_dict into .json
+    # Save news_dict into .json
     with open(json_folder_path + "/" + gn_json, 'w') as file:
-        json.dump(news_dict, file, indent=4)
+        json.dump(news_dict, file, indent = 4)
     
     print(f"> Updated {gn_json} in {data_path}")
 
@@ -120,7 +120,7 @@ async def parse_html_nhk():
         nhk_html = "news_nhk_" + topic_en + ".html"
 
         file_path = check_file(file = nhk_html, folder_path = html_folder_path)
-        success = asyncio.get_event_loop().create_task(scrape_html(url=nhk_url_topic, html_path=file_path))
+        success = asyncio.get_event_loop().create_task(scrape_html(url = nhk_url_topic, html_path = file_path))
         await success
 
         if success:    
@@ -132,13 +132,14 @@ async def parse_html_nhk():
             articles = soup.select('a[href^="https://news.web.nhk/newsweb/na"]')
             for article in articles:
                 link = article['href']
-                title_tag = article.select_one('strong')
-                title = title_tag.get_text(strip=True) if title_tag else ""
+                # title_tag = article.select_one('strong')
+                title_tag = article.select_one('p')
+                title = title_tag.get_text(strip = True) if title_tag else ""
                 news_dict[topic_jp].append([title, link])
 
-            ## Save news_dict into .json
+            # Save news_dict into .json
             with open(json_folder_path + "/" + nhk_json, 'w') as file:
-                json.dump(news_dict, file, indent=4)
+                json.dump(news_dict, file, indent = 4)
             
             print(f"> Updated {nhk_json} in {json_folder_path}")
         else:

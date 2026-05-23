@@ -17,20 +17,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             "/command to view all available commands"])
     await update.message.reply_text(message)
 
+
 async def commands(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     username = user["username"]
     if username == master:
-        message = "/news | /steam | /ai\n"
-        message += "/expense | /sleep | /notion"
+        message = "/news | /steam | /ai\n/expense | /sleep | /notion"
     else:
-        message = "| /news |"
+        message = "/news"
     await update.message.reply_text(message)
+
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "A solo project by 'https://github.com/hnk21'\n"
-    message += "Creating a personal pinboard / info assistant using telegram bots as a front-end"
+    message += "Personal pinboard / info assistant using telegram bots as a front-end"
     await update.message.reply_text(message)
+
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
@@ -39,8 +41,9 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = f"Yo {name}, I did not understand '{user_message}'"
     await update.message.reply_text(message)
 
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Exited current node", reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text("Exited node to main menu", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 # -------------------------------------------------- #

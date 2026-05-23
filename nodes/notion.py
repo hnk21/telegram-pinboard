@@ -10,10 +10,10 @@ reply_keyboard = [["☓", "◯"]]
 
 async def notion_node(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
-    print(f"\n>> notion.py > notion_node > User: {user["username"]}")
     name, username = user["first_name"], user["username"]
+    print(f"\n>> notion.py > notion_node > User: {username}")
     if username == master:
-        message = "\n".join(["Welcome to the Notion node",
+        message = "\n".join(["- notion node -",
                             "/jpvocab - 日本語の語彙を練習",
                             # "/command - Do something on Notion",
                             # "/command - Do something on Notion",
@@ -33,18 +33,20 @@ async def notion_jpvocab(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(message, reply_markup=ReplyKeyboardRemove())
     return JP_VOCAB_GET
 
+
 async def notion_jpvocab_get(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global page_size; page_size = update.message.text
     page_size = int(page_size)
     message = f"Fetching {page_size} entries..."
+    await update.message.reply_text(message)
     payload = {
         "sorts": [ 
             {
-                "property": "Revised", "direction": "ascending"
+                "property": "revised", "direction": "ascending"
             }
         ],
         "filter": {
-            "property": "State", "type": "select",
+            "property": "state", "type": "select",
             "select": { "equals": "redo" }
         },
         "page_size": page_size,
@@ -53,8 +55,7 @@ async def notion_jpvocab_get(update: Update, context: ContextTypes.DEFAULT_TYPE)
     }
     success = post_querydatasource(data_source_id = notion_datasource_id_jpvocab, payload = payload)
     if success:
-        message += "ok"
-        await update.message.reply_text(message)
+        await update.message.reply_text("ok")
         global curr; curr = 0
         with open(json_folder_path + "/" + notion_jpvocab_json, 'r') as file:
             global vocab_dict
@@ -64,16 +65,17 @@ async def notion_jpvocab_get(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.message.reply_text(message, reply_markup=ReplyKeyboardMarkup([["Start"]], resize_keyboard=True, one_time_keyboard=False))
         return JP_VOCAB_ANS
     else:
-        message += "failed, returning to the Notion menu"
+        message = "Failed, returned to Notion menu"
         await update.message.reply_text(message)
         return NOTIONMENU
+
 
 async def notion_jpvocab_ans(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global curr
     vocab = vocab_dict[curr]
     vocabID = vocab["id"]
     properties   = vocab["properties"]
-    vocabName    = properties["Name"]["title"][0]["text"]["content"]
+    vocabName    = properties["name"]["title"][0]["text"]["content"]
     # vocabRevised = properties["Revised"]["date"]["start"]
     message = f"Vocab {curr+1} / {page_size} >>> {vocabName}"
     await update.message.reply_text(message, reply_markup=ReplyKeyboardMarkup(reply_keyboard, resize_keyboard=True, one_time_keyboard=False))
@@ -89,20 +91,19 @@ async def notion_jpvocab_ans(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def notion_jpvocab_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "Practice Ended"
-    await update.message.reply_text(message, reply_markup=ReplyKeyboardRemove())
-    message = "Updating vocab database..."
-    await update.message.reply_text(message)
+    print(f">> notion.py > notion_jpvocab_update")
+    message = "Practice ended, updating vocab database..."
+    await update.message.reply_text(message, reply_markup = ReplyKeyboardRemove())
     revised_value = datetime.now().strftime("%Y-%m-%d")
     successful_updates = 0
     for page_id, state_value in pages_to_update.items():
         payload = {
             "properties": {
-                "State": {
+                "state": {
                     "type": "select",
                     "select": { "name": state_value }
                 },
-                "Revised": {
+                "revised": {
                     "date": { "start": revised_value },
                     "type": "date"
                 }
@@ -116,7 +117,7 @@ async def notion_jpvocab_update(update: Update, context: ContextTypes.DEFAULT_TY
         message = f"Update was partially successful, {successful_updates}/{page_size} notion pages were updated"
     else:
         message = "Update failed, no pages were updated"
-    print(f"\n>> notion.py > notion_jpvocab_update > Updated {successful_updates}/{page_size} notion pages")
+    print(f"> Updated {successful_updates}/{page_size} notion pages")
     await update.message.reply_text(message)
     message = "Returning to Notion menu..."
     await update.message.reply_text(message)
@@ -127,6 +128,7 @@ async def notion_jpvocab_update(update: Update, context: ContextTypes.DEFAULT_TY
 # -------------------------------------------------- #
 
 def post_querydatasource(data_source_id, payload):
+    print(">> notion.py > post_querydatasource (POST) > ", end = "")
     url = f"https://api.notion.com/v1/data_sources/{data_source_id}/query"
     pages = []    
     response = requests.post(url, json = payload, headers = notion_headers)
@@ -135,18 +137,20 @@ def post_querydatasource(data_source_id, payload):
         pages.extend(data.get("results", []))
         with open(json_folder_path + "/" + notion_jpvocab_json, 'w') as file:
             json.dump(pages, file, indent=4)
-        print("\n>> notion.py > post_querydatasource > POST - Query Data Source > ok")
+        print("ok")
         return True
     else:
-        print("\n>> notion.py > post_querydatasource > POST - Query Data Source > failed")
+        print("failed")
         return False
 
+
 def patch_updatepage(page_id, payload):
+    print(">> notion.py > patch_updatepage (PATCH) > ", end = "")
     url = f"https://api.notion.com/v1/pages/{page_id}"
     response = requests.patch(url, json = payload, headers = notion_headers)
     if response:
-        print("\n>> notion.py > patch_updatepage > PATCH - Update Page > ok")
+        print("ok")
         return True
     else:
-        print("\n>> notion.py > patch_updatepage > PATCH - Update Page > failed")
+        print("failed")
         return False

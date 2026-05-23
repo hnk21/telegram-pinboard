@@ -15,13 +15,32 @@ def main(api_token):
         entry_points = [CommandHandler("sleep", sleep_node)],
         states = {SLEEPMENU: [CommandHandler("add", sleep_add),
                               CommandHandler("view", sleep_view),
-                              CommandHandler("clear", sleep_clear)
+                              CommandHandler("clear", sleep_clear_confirm)
                               ],
-                  SLEEPADD:  [MessageHandler(filters.Regex("^(?:(?:[0-1][0-9]|2[0-3])[0-5][0-9])(?:;(?:[0-1][0-9]|2[0-3])[0-5][0-9])*$"), sleep_add_update)]
+                  SLEEPADD:  [MessageHandler(filters.Regex("^(?:(?:[0-1][0-9]|2[0-3])[0-5][0-9])(?:,(?:[0-1][0-9]|2[0-3])[0-5][0-9])*$"), sleep_add_update)],
+                  SLEEPVIEW: [MessageHandler(filters.Regex("^\\d{4}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])$"), sleep_view_get)],
+                  SLEEPCLEAR : [MessageHandler(filters.Regex("^(◯|✕)$"), sleep_clear_execute)]
                   },
         fallbacks = [CommandHandler("cancel", cancel)]
     )
     application.add_handler(sleep_node_handler)
+
+    ### expense handler ###
+    expense_node_handler = ConversationHandler(
+        entry_points = [CommandHandler("expense", expense_node)],
+        states = {EXPMENU: [CommandHandler("add", expense_add_type),
+                            CommandHandler("view", expense_view_type),
+                            CommandHandler("clear", expense_clear_confirm)
+                            ],
+                  EXPADD_TYPE:  [MessageHandler(filters.Regex("^(食|交通|物)$"), expense_add_amount)],
+                  EXPADD_AMT:  [MessageHandler(filters.Regex("^\\d+(\\.\\d{1,2})?(\\+\\d+(\\.\\d{1,2})?)*$"), expense_add_update)],
+                  EXPGET_TYPE:  [MessageHandler(filters.Regex("^(食|交通|物)$"), expense_view_date)],
+                  EXPGET_DATE: [MessageHandler(filters.Regex("^[0-9]{6}$"), expense_view_get)],
+                  EXPCLEAR : [MessageHandler(filters.Regex("^(◯|✕)$"), expense_clear_execute)]
+                  },
+        fallbacks = [CommandHandler("cancel", cancel)]
+    )
+    application.add_handler(expense_node_handler)
 
     ### news handler ###
     news_node_handler = ConversationHandler(
@@ -37,23 +56,6 @@ def main(api_token):
         fallbacks = [CommandHandler("cancel", cancel)]
     )
     application.add_handler(news_node_handler)
-
-    ### expense handler ###
-    expense_node_handler = ConversationHandler(
-        entry_points = [CommandHandler("expense", expense_node)],
-        states = {EXPMENU: [CommandHandler("add", expense_add_type),
-                            CommandHandler("view", expense_view_type),
-                            CommandHandler("clear", expense_clear)
-                            ],
-                  EXPADD_TYP:  [MessageHandler(filters.Regex("^(食|交通|物)$"), expense_add_amount)],
-                  EXPADD_AMT:  [MessageHandler(filters.Regex("^\\d+(\\.\\d{1,2})?(\\+\\d+(\\.\\d{1,2})?)*$"), expense_add_update)],
-                  EXPGET_TYP:  [MessageHandler(filters.Regex("^(食|交通|物)$"), expense_view_date)],
-                  EXPGET_DATE: [MessageHandler(filters.Regex("^[0-9]{6}$"), expense_view_get)],
-                  EXPCLEAR : [MessageHandler(filters.Regex("^(⭕|❌)$"), expense_clear_execute)]
-                  },
-        fallbacks = [CommandHandler("cancel", cancel)]
-    )
-    application.add_handler(expense_node_handler)
 
     ### notion handler ###
     notion_node_handler = ConversationHandler(
@@ -105,7 +107,7 @@ def main(api_token):
                               CommandHandler("cancel", cancel),
                               MessageHandler(filters.TEXT & (~filters.COMMAND), echo)])
 
-    print("\n>> main.py > hnk_pinboard bot ONLINE")
+    print("\n> main.py > hnk_pinboard bot ONLINE")
     application.run_polling()
 
 # -------------------------------------------------- #
@@ -115,6 +117,6 @@ def main(api_token):
 try:
     if __name__ == '__main__':
         main(telegram_token)
-        print("\n>> main.py > hnk_pinboard bot OFFLINE")
+        print("\n> main.py > hnk_pinboard bot OFFLINE")
 except Exception as e:
-    print(f"\n>> main.py > Failed to start hnk_pinboard telegram bot > Error: {e}")
+    print(f"\n> main.py > Failed to start hnk_pinboard telegram bot > Error: {e}")
