@@ -1,11 +1,11 @@
 from utility.helper import *
 
 # -------------------------------------------------- #
-# Main scraper function                              #
+# Main scraper                                       #
 # -------------------------------------------------- #
 
 async def scrape_html(url: str, html_path: str) -> bool:
-    print(f">> scraper.py > scrape_html\n> Connecting to '{url}'...")
+    print(f">> scraper.py > scrape_html > Connecting to '{url}'...")
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -24,11 +24,11 @@ async def scrape_html(url: str, html_path: str) -> bool:
         return False
 
 # -------------------------------------------------- #
-# CNA HTML scraper                                   #
+# Channel News Asia html scraper                     #
 # -------------------------------------------------- #
 
 async def parse_html_cna():
-    print(f"\n>> scraper.py > parse_html_cna")
+    print(f">> scraper.py > parse_html_cna")
     
     file_path = check_file(file = cna_html, folder_path = html_folder_path)
     success = asyncio.get_event_loop().create_task(scrape_html(url = cna_url, html_path = file_path))
@@ -43,7 +43,7 @@ async def parse_html_cna():
         # Grab tags with attribute 'data-category' that are in defined categories
         # Then get attributes 'data-category', 'data-heading', 'data-link_absolute'
         categories = ["Business", "World", "Asia", "East Asia"]
-        tags = soup(attrs={"data-category": categories})
+        tags = soup(attrs = {"data-category": categories})
         news_dict = defaultdict(list)
         for tag in tags:
             category = tag["data-category"]
@@ -60,11 +60,11 @@ async def parse_html_cna():
         print(f"> Could not scrape from '{cna_url}'")
 
 # -------------------------------------------------- #
-# Ground News HTML Scraper                           #
+# Ground News html scraper                           #
 # -------------------------------------------------- #
 
 async def parse_html_gn():
-    print(f"\n>> scraper.py > parse_html_gn")
+    print(f">> scraper.py > parse_html_gn")
 
     news_dict = defaultdict(list)
 
@@ -107,11 +107,11 @@ async def parse_html_gn():
     print(f"> Updated {gn_json} in {data_path}")
 
 # -------------------------------------------------- #
-# NHK HTML Scraper                                   #
+# NHK Japan html scraper                             #
 # -------------------------------------------------- #
 
 async def parse_html_nhk():
-    print(f"\n>> scraper.py > parse_html_nhk")
+    print(f">> scraper.py > parse_html_nhk")
 
     news_dict = defaultdict(list)
 
@@ -147,7 +147,7 @@ async def parse_html_nhk():
 
 
 # -------------------------------------------------- #
-# Tag filter function                                #
+# Tag filter                                         #
 # -------------------------------------------------- #
 
 def filter_attr_href(tag):

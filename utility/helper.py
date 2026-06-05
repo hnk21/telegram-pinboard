@@ -2,11 +2,12 @@
 # imports                                            #
 # -------------------------------------------------- #
 
-import aiohttp, asyncio, os, json, requests
+import aiohttp, asyncio, sys, os, json, requests
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-from dotenv import load_dotenv, dotenv_values
+from dotenv import load_dotenv # dotenv_values
+from google import genai
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import Application, CommandHandler, ConversationHandler, ContextTypes, MessageHandler, filters
 
@@ -15,7 +16,7 @@ from telegram.ext import Application, CommandHandler, ConversationHandler, Conte
 # -------------------------------------------------- #
 
 def initialise_data_folder():
-    print(f"\n>> helper.py > initialise_data_folder")
+    print(f">>> helper.py > initialise_data_folder")
 
     curr_dir = os.getcwd()
     data_folder = "_data"
@@ -46,7 +47,7 @@ def initialise_data_folder():
 # Returns the file path
 
 def check_file(file: str, folder_path: str):
-    print(f"\n>> helper.py > check_file")
+    print(f">>> helper.py > check_file")
 
     file_path = folder_path + "/" + file
     if os.path.exists(file_path):
@@ -64,7 +65,7 @@ def check_file(file: str, folder_path: str):
 # Also returns its file path
 
 def check_file_update(file: str, folder_path: str, hours: int):
-    print(f"\n>> helper.py > check_file_update")
+    print(f">>> helper.py > check_file_update")
 
     file_path = folder_path + "/" + file
     to_update = True
@@ -101,7 +102,7 @@ notion_datasource_id_jpvocab = os.getenv("NOTION_AKR_DATASOURCE_ID_NIHONGONOGOI"
 # notion_datasource_id_ = os.getenv("NOTION_AKR_DATASOURCE_ID_")
 steam_token = os.getenv("STEAM_API_TOKEN")
 steam_id = os.getenv("STEAM_ID")
-
+gemini_token = os.getenv("GEMINI_API_TOKEN")
 
 # -------------------------------------------------- #
 # standard.py > get_time()                           #
@@ -156,10 +157,40 @@ nhk_topics   = {"business"     : "経済",
                 "international": "国際"}
 
 # -------------------------------------------------- #
-# API variables                                      #
+# api variables                                      #
 # -------------------------------------------------- #
 
 notion_version = "2026-03-11"
 notion_headers = {'Authorization': f"Bearer {notion_token_workspace_1}",
                   'Content-Type': 'application/json',
                   'Notion-Version': notion_version}
+
+# -------------------------------------------------- #
+# prompt instructions for large language models      #
+# -------------------------------------------------- #
+gemini_model = "gemini-3-flash-preview"
+
+SEARCH_INSTRUCTIONS = '''Strictly adhere to the following rules when answering the prompt:
+                    - Search for sources from your knowledge database that answers the prompt, such as links to websites or books
+                    - Then, return the sources used
+                    Prompt: 
+                    '''
+
+CHECK_INSTRUCTIONS = '''Strictly adhere to the following rules when answering the prompt:
+                    - Cross-check the prompt with sources in your knowledge database
+                    - Provide a short paragraph of the answer to the prompt
+                    - Then, return the list of sources used in your knowledge database to answer the prompt
+                    Prompt: 
+                    '''
+
+SUMMARY_INSTRUCTIONS = '''Strictly adhere to the following rules when answering the prompt:
+                    - Provide a summary of the article from the provided link
+                    - Only use information in the article from the provided link
+                    - Do not use information from other sources in your knowledge database
+                    - Do not change any statistical numbers or factual statements in the article
+                    - First, return the name of the article as is, and the date and time that this article was published from the provided link
+                    - Second, return the entire content of the article from the provided link
+                    - Then, provide the summarised version of that article
+                    - Lastly, provide any other sources used in constructing the summary
+                    Prompt: 
+                    '''

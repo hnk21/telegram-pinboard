@@ -1,37 +1,11 @@
 # python-telegram-bots
-Last updated: 2026-04-25
+Last updated: 2026-06
 
 Personal project, telegram bot as an assistant/pinboard.
 
 Using python-telegram-bot, as the front end interaction
 
 https://docs.python-telegram-bot.org/en/v21.8/index.html
-
---------------------------------------------------
-
-# To Update Backlog
-
-- **AI node**
-    - Google Gemini
-    - Prepare different rules to control the response allowed for the LLM, each catered to specific answer requirements
-        - General query
-        - News article summariser
-        - Answer as a certain character (e.g. Chainsawman Pochita)
-- **Expense node**
-    - Try API to Microsoft OneDrive and update my actual expense Excel
-        - https://learn.microsoft.com/en-us/graph/api/resources/onedrive?view=graph-rest-1.0&viewFallbackFrom=odsp-graph-online
-    - Analysis, matplotlib
-        - Amount spent over each month
-- **Sleep node**
-    - Data logging from .txt to .db sqlite3
-    - Analysis, matplotlib
-        - Plot sleep start times
-- **Notion node**
-    - akr workspace > 2_BUNKA > Japanese vocab training
-        - Return overall result of practice (which words ok, which words redo)
-    - akr workspace > 1_EVENTS
-        - Fetch today's events
-        - Fetch this week's events
 
 --------------------------------------------------
 
@@ -42,11 +16,11 @@ https://docs.python-telegram-bot.org/en/v21.8/index.html
 ### /start
 Starts the bot and display opening message.
 
-### /commands
-Displays available commands that starts a node/feature.
+### /nodes
+Displays available nodes.
 
 ### /about
-General description about the bot.
+General description about this project.
 
 --------------------------------------------------
 
@@ -66,6 +40,21 @@ Pulls news article titles and links from selected sites.
     - https://news.web.nhk/newsweb/genre/, for the following categories:
     - business, society, politics, international
 
+### /gemini
+Google Gemini Large Language Model
+
+Feed defined rules for following types of things the LLM is to do:
+
+- Search
+    - ...
+- Check
+    - ...
+- Summarise
+    - Provide a link to a source article, then return a summary of that article
+    - Notes/Findings: Large langauge models are just text predictors
+    - As expected, it cannot/are not capable of doing this, they literally make stuff up from the provided article link given, and the contents of the "original article" it returns changes for each fresh prompt provided for the same link
+    - It cannot do the action of accessing the link and fetching and parsing the contents of the article, need to scrape the contents of the article and then feed it
+
 --------------------------------------------------
 
 ## Personal Nodes
@@ -75,9 +64,6 @@ Integration with personal Notion workspace.
 
 ### /steam
 Fetch my Steam account's info via REST API calls.
-
-### /ai
-Google Gemini LLM, feed specific prompt rules for certain actions (Search, Summarise, Check)
 
 ### /sleep
 For logging sleep timings.

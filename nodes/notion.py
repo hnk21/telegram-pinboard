@@ -5,7 +5,7 @@ NOTIONMENU, JP_VOCAB_GET, JP_VOCAB_ANS, JP_VOCAB_UPD = range(4)
 reply_keyboard = [["☓", "◯"]]
 
 # -------------------------------------------------- #
-# Main node menu                                     #
+# Main node                                          #
 # -------------------------------------------------- #
 
 async def notion_node(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -14,10 +14,9 @@ async def notion_node(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"\n>> notion.py > notion_node > User: {username}")
     if username == master:
         message = "\n".join(["- notion node -",
-                            "/jpvocab - 日本語の語彙を練習",
-                            # "/command - Do something on Notion",
-                            # "/command - Do something on Notion",
-                            "/cancel - Exit node"
+                            "/jpvocab - 日本語の語彙を練習"
+                            # "/command - do something on Notion",
+                            # "/command - do something on Notion",
                             ])
     else:
         message = f"Hey '{name}' you can't access this node!"
@@ -25,7 +24,7 @@ async def notion_node(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return NOTIONMENU
 
 # -------------------------------------------------- #
-# State functions                                    #
+# 語彙の練習                                           #
 # -------------------------------------------------- #
 
 async def notion_jpvocab(update: Update, context: ContextTypes.DEFAULT_TYPE):

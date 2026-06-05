@@ -13,7 +13,7 @@ sleeplog_path = check_file(file = sleep_log, folder_path = data_path)
 next_date = date.today()
 
 # -------------------------------------------------- #
-# Main node menu                                     #
+# Main node                                          #
 # -------------------------------------------------- #
 
 async def sleep_node(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -21,10 +21,9 @@ async def sleep_node(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     name, username = user["first_name"], user["username"]
     print(f"\n>> sleep_node.py > sleep_node > User: {username}")
     if username == master:
-        message = "\n".join(["- sleep node -",
+        message = "\n".join(["| sleep node",
                             "/add - Add sleep timings",
-                            "/view - View sleep log",
-                            "/cancel - Exit node"
+                            "/view - View sleep log"
                             ])
     else:
         message = f"Hey '{name}' you can't access this node!"
@@ -32,7 +31,7 @@ async def sleep_node(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return SLEEPMENU
 
 # -------------------------------------------------- #
-# Functions for adding sleep records                 #
+# Add sleep records                                  #
 # -------------------------------------------------- #
 
 async def sleep_add(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -97,7 +96,7 @@ def sleep_update(from_date: str, new_times: str):
         return False
 
 # -------------------------------------------------- #
-# Functions for fetching from sleep log              #
+# Get sleep data                                     #
 # -------------------------------------------------- #
 
 async def sleep_view(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -175,23 +174,35 @@ def sleep_fetch(from_date: str):
         return False
 
 # -------------------------------------------------- #
-# Functions for clearing sleep log                   #
+# Sleep analytics                                    #
+# -------------------------------------------------- #
+
+# async def sleep_analytics_(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # return
+
+# select duration: past x days
+# do analytics, return result plot
+
+
+
+# -------------------------------------------------- #
+# Clear sleep data                                   #
 # -------------------------------------------------- #
 
 async def sleep_clear_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = "Clear sleep log - Are you sure?"
+    message = "Clear all sleep data - Are you sure?"
     await update.message.reply_text(message, reply_markup = ReplyKeyboardMarkup(reply_keyboard_confirm, resize_keyboard = True, one_time_keyboard = False))
     return SLEEPCLEAR
 
 async def sleep_clear_execute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     confirm = update.message.text
     if confirm == "◯":
-        message = "Clearing expense log..."
+        message = "Clearing sleep data..."
         await update.message.reply_text(message)
         success = sleep_clear()
         message = "ok" if success else "failed"
     else:
-        message = "Clear cancelled"
+        message = "Clear cancelled, returned to sleep node"
     await update.message.reply_text(message, reply_markup = ReplyKeyboardRemove())
     return SLEEPMENU
 

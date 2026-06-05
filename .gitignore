@@ -2,7 +2,7 @@ __pycache__
 .venv
 .directory
 .env
-code_log.md
+__log.md
 
 _*.py
 
@@ -12,3 +12,4 @@ _*.py
 *.json
 *.txt
 *.db
+*.xlsx
