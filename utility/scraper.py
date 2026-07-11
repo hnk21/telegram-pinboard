@@ -29,35 +29,36 @@ async def scrape_html(url: str, html_path: str) -> bool:
 
 async def parse_html_cna():
     print(f">> scraper.py > parse_html_cna")
+
+    news_dict = defaultdict(list)
+
+    for topic, topic_label in cna_topics.items():
+        cna_url_topic = cna_url + topic
+        cna_html = "news_cna_" + topic + ".html"
     
-    file_path = check_file(file = cna_html, folder_path = html_folder_path)
-    success = asyncio.get_event_loop().create_task(scrape_html(url = cna_url, html_path = file_path))
-    await success
+        file_path = check_file(file = cna_html, folder_path = html_folder_path)
+        success = asyncio.get_event_loop().create_task(scrape_html(url = cna_url_topic, html_path = file_path))
+        await success
 
-    if success:    
-        with open(file_path, 'r', encoding = 'utf-8') as file:
-            html_content = file.read()
-        
-        soup = BeautifulSoup(html_content, 'html.parser')
+        if success:    
+            with open(file_path, 'r', encoding = 'utf-8') as file:
+                html_content = file.read()
+                
+            soup = BeautifulSoup(html_content, 'html.parser')
 
-        # Grab tags with attribute 'data-category' that are in defined categories
-        # Then get attributes 'data-category', 'data-heading', 'data-link_absolute'
-        categories = ["Business", "World", "Asia", "East Asia"]
-        tags = soup(attrs = {"data-category": categories})
-        news_dict = defaultdict(list)
-        for tag in tags:
-            category = tag["data-category"]
-            link     = tag["data-link_absolute"]
-            title    = tag["data-heading"]
-            news_dict[category].append([title, link])
+            articles = soup.find_all('a', class_='list-object__heading-link')
+            for article in articles:
+                title = article.get_text(strip = True)
+                link = article.get('href')
+                news_dict[topic_label].append([title, cna_url[:-1] + link])
+
+            # Save news_dict into .json
+            with open(json_folder_path + "/" + cna_json, 'w') as file:
+                json.dump(news_dict, file, indent = 4)
         
-        # Save news_dict into .json
-        with open(json_folder_path + "/" + cna_json, 'w') as file:
-            json.dump(news_dict, file, indent = 4)
-        
-        print(f"> Updated {cna_json} in {data_path}")
-    else:
-        print(f"> Could not scrape from '{cna_url}'")
+            print(f"> Updated {cna_json} in {data_path}")
+        else:
+            print(f"> Could not scrape from '{cna_url}'")
 
 # -------------------------------------------------- #
 # Ground News html scraper                           #

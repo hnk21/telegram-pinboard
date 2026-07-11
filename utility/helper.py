@@ -2,14 +2,18 @@
 # imports                                            #
 # -------------------------------------------------- #
 
-import aiohttp, asyncio, sys, os, json, requests
 from bs4 import BeautifulSoup
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from dotenv import load_dotenv # dotenv_values
 from google import genai
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import Application, CommandHandler, ConversationHandler, ContextTypes, MessageHandler, filters
+import aiohttp, asyncio, datetime, sys, os, json, requests
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.animation as animation
+import numpy as np
 
 # -------------------------------------------------- #
 # directory functions                                #
@@ -20,7 +24,7 @@ def initialise_data_folder():
 
     curr_dir = os.getcwd()
     data_folder = "_data"
-    # print(f"\n>> helper.py > Current directory: '{curr_dir}'")
+    # print(f">> helper.py > Current directory: '{curr_dir}'")
     data_folder_path = curr_dir + "/" + data_folder
 
     for root, dirs, files in os.walk(curr_dir):
@@ -70,8 +74,8 @@ def check_file_update(file: str, folder_path: str, hours: int):
     file_path = folder_path + "/" + file
     to_update = True
     if os.path.exists(file_path):
-        last_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
-        hours_ago = (datetime.now() - last_modified).days * 24 + (datetime.now() - last_modified).seconds / 3600
+        last_modified = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+        hours_ago = (datetime.datetime.now() - last_modified).days * 24 + (datetime.datetime.now() - last_modified).seconds / 3600
         if hours_ago <= hours:
             to_update = False
         print(f"> Found '{file}', last modified {round(hours_ago, 0)} hours ago")
@@ -120,9 +124,11 @@ weekdays_en_jp = {"Monday"   : "月",
 # data folder > file variables                       #
 # -------------------------------------------------- #
 
-sleep_log   = "sleep_log.txt"
+bedtime_log   = "bedtime_log.txt"
 expense_log = "expense_log.txt"
 
+bedtime_plot_png = "bedtime_plot.png"
+bedtime_plot_gif = "bedtime_plot.gif"
 
 cna_html = "news_cna.html"
 cna_json = "news_cna.json"
@@ -135,11 +141,16 @@ steam_json_1 = "steam_recentlyplayedgames.json"
 steam_json_2 = "steam_wishlist.json"
 
 # -------------------------------------------------- #
-# news_node.py                                       #
+# news.py                                            #
 # -------------------------------------------------- #
 
 # CNA
-cna_url = "https://www.channelnewsasia.com/latest-news"
+cna_url = "https://www.channelnewsasia.com/"
+cna_topics   = {"business": "Business",
+                "world": "World",
+                "east-asia": "East Asia",
+                "asia": "Asia",
+                "singapore": "Singapore"}
 
 # Ground News
 gn_url  = "https://ground.news/interest/"
@@ -180,17 +191,5 @@ CHECK_INSTRUCTIONS = '''Strictly adhere to the following rules when answering th
                     - Cross-check the prompt with sources in your knowledge database
                     - Provide a short paragraph of the answer to the prompt
                     - Then, return the list of sources used in your knowledge database to answer the prompt
-                    Prompt: 
-                    '''
-
-SUMMARY_INSTRUCTIONS = '''Strictly adhere to the following rules when answering the prompt:
-                    - Provide a summary of the article from the provided link
-                    - Only use information in the article from the provided link
-                    - Do not use information from other sources in your knowledge database
-                    - Do not change any statistical numbers or factual statements in the article
-                    - First, return the name of the article as is, and the date and time that this article was published from the provided link
-                    - Second, return the entire content of the article from the provided link
-                    - Then, provide the summarised version of that article
-                    - Lastly, provide any other sources used in constructing the summary
                     Prompt: 
                     '''

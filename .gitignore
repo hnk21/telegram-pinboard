@@ -4,12 +4,13 @@ __pycache__
 .env
 __log.md
 
-_*.py
-
 *.env
 *.html
+_*.py
 *.ipynb
 *.json
 *.txt
 *.db
 *.xlsx
+*.png
+*.gif
