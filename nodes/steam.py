@@ -2,7 +2,7 @@ from utility.helper import *
 from utility.formatter import format_markdown
 
 # States
-NODE = range(1)
+NODE = 0
 
 # Number of hours before .json for steam needs to be updated
 hours = 24

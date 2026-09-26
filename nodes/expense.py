@@ -1,4 +1,5 @@
 from utility.helper import *
+from utility.formatter import format_markdown
 
 # States
 NODE, ADD_TYPE, ADD_AMT, GET_DATE, CLEAR = range(5)
@@ -75,13 +76,13 @@ def update_expense_log(expense_date: str, expense_type: str, expense_amounts: st
         return False
 
 # -------------------------------------------------- #
-# Get expense data for specific year month           #
+# Get expense data for specific year                 #
 # -------------------------------------------------- #
 
 async def view_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     got_data = check_expense_log()
     if got_data:
-        message = "curr - Current month\nlast - Last month\nOr enter yyyymm"
+        message = "curr - Current year\nlast - Last year\nOr enter a specific year"
         await update.message.reply_text(message)
         return GET_DATE
     else:
@@ -91,24 +92,26 @@ async def view_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 async def view_expenses_get(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     input = update.message.text
-    print(f"view_get > input = {input}")
-
     if input == "curr":
-        yearmonth = datetime.datetime.today().strftime("%Y%m")
+        year = datetime.datetime.today().strftime("%Y")
     elif input == "last":
-        last_month = datetime.datetime.today().replace(day = 1) - timedelta(days = 1)
-        yearmonth = last_month.strftime("%Y%m")
+        year = str(int(datetime.datetime.today().strftime("%Y")) - 1)
     else:
-        yearmonth = input
-    await update.message.reply_text(f"Retrieving expenses for {yearmonth}...")
+        year = input
+    await update.message.reply_text(f"Retrieving expenses for {year}...")
 
-    result = get_expenses(yearmonth = yearmonth)
+    result = get_expenses(year)
     if result:
         total_amount = float()
-        for exp_type in result.keys():
-            message = f"> {exp_type} = ${round(result[exp_type], 2)}\n"
-            total_amount += result[exp_type]
-        message += f">> Total = ${round(total_amount, 2)}"
+        message = ""
+        for month in result.keys():
+            # message += f"> {month}\n"
+            message += f"// {month}\n"
+            for exp_type in result[month]:
+                message += f"{exp_type} = ${round(result[month][exp_type], 2)}\n"
+            total_amount += result[month][exp_type]
+            message += "\n"
+        message += f"Total = ${round(total_amount, 2)}"
         await update.message.reply_text(message)
     else:
         await update.message.reply_text("failed")
@@ -128,19 +131,22 @@ def check_expense_log() -> bool:
         print(f"> Error: {e}")
         return False
 
-def get_expenses(yearmonth: str):
+def get_expenses(year: str):
     print(">> expense.py > get_expenses")
     try:
-        result = defaultdict(float)
+        result = defaultdict()
         with open(log_path, "r") as log:
             expenses = log.readlines()
             for exp in expenses:
                 e = exp.split(",")
-                e_date, e_type, e_amount = e[0], e[1], e[2]
-                e_yearmonth = e_date[0:4] + e_date[5:7]
-                if e_yearmonth == yearmonth:
-                    result[e_type] += float(e_amount)
-        print(f"> Retrieved expenses for {yearmonth}")
+                e_year = e[0][0:4]
+                e_yearmonth = e[0][0:4] + e[0][5:7]
+                e_type, e_amount = e[1], e[2]
+                if e_year == year:
+                    if e_yearmonth not in result:
+                        result[e_yearmonth] = defaultdict(float)
+                    result[e_yearmonth][e_type] += float(e_amount)
+        print(f"> Retrieved expenses for year {year}")
         return result
     except Exception as e:
         print(f"> Error: {e}")

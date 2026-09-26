@@ -43,9 +43,6 @@ Pulls news article titles and links from selected sites.
     - https://news.web.nhk/newsweb/genre/, for the following categories:
     - business, society, politics, international
 
-### /gemini
-Don't really have a practical use case for this so removing this for now.
-
 --------------------------------------------------
 
 ## Personal Nodes
@@ -58,9 +55,5 @@ For logging bedtimes.
 
 ### /expense
 For logging simple expenses.
-
-### /notion
-Integration with personal Notion workspace.
-Currently broken. Don't really have a practical use case for this so removing this for now.
 
 --------------------------------------------------

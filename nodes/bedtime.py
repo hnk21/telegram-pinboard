@@ -104,7 +104,7 @@ async def view_bedtimes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if dates:
         global first_date, last_date
         first_date, last_date = dates[0], dates[1]
-        message = f"Enter 'all' to retrieve entire log,\nor a date between {first_date} and {last_date} (yyyymmdd) to start retrieving from"
+        message = f"Enter 'all' to retrieve entire log,\nor a date (yyyymmdd) between '{first_date}' and '{last_date}' to start retrieving from"
         await update.message.reply_text(message, reply_markup = ReplyKeyboardRemove())
         return VIEW
     else:
@@ -174,7 +174,7 @@ def fetch_bedtimes(from_date: str):
                     break
         if len(result) > 1:
             result.reverse()
-            result.insert(0, f"{len(result)} record(s) from {from_date} - {end_date}")
+            result.insert(0, f"{len(result)} records from {from_date} - {end_date}")
         else:
             result.insert(0, f"Record for {from_date}")
         return result
@@ -254,17 +254,21 @@ def plot_bedtimes(data: list) -> bool:
             date_data.append(date_str)
             time_data.append(datetime.time(int(time_str[:2]), int(time_str[2:])))
 
+        # x = Date
         x_data = np.array(date_data, dtype = 'datetime64[D]')
-        y_data = [datetime.datetime.combine(datetime.date(1997, 7, 30), t) for t in time_data]
+        # y = Bedtime
+        y_data = [datetime.datetime.combine(datetime.date(1997, 7, 29), t) if 12 <= t.hour <= 23 else datetime.datetime.combine(datetime.date(1997, 7, 30), t) for t in time_data]
 
         # Plot data
         ax.plot(x_data, y_data, color = "#abb8ac", marker = "x", markersize = 7)
-        ax.axhline(y = datetime.datetime(1997, 7, 30, 2, 30, 0), label = "danger", color = "#CC898B", linestyle = "-")
-        ax.axhline(y = datetime.datetime(1997, 7, 30, 0, 0, 0), label = "ok", color = "#b8c984", linestyle = "-")
+
+        # Plot target bedtimes
+        ax.axhline(y = datetime.datetime(1997, 7, 30, 1, 0, 0), label = "danger", color = "#CC898B", linestyle = "-")
+        ax.axhline(y = datetime.datetime(1997, 7, 29, 23, 0, 0), label = "ok", color = "#b8c984", linestyle = "-")
 
         # Define axis limits
         ax.set_xlim(left = x_data[0], right = x_data[-1])
-        ax.set_ylim(bottom = datetime.datetime(1997, 7, 29, 23, 0), top = datetime.datetime(1997, 7, 30, 3, 30))
+        ax.set_ylim(bottom = datetime.datetime(1997, 7, 29, 22, 0), top = datetime.datetime(1997, 7, 30, 3, 0))
 
         # Date and time formatter for axes tickers
         date_formatter = mdates.DateFormatter('%b-%d (%a)')

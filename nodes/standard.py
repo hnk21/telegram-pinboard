@@ -19,9 +19,10 @@ async def nodes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     username = user["username"]
     if username == master:
-        message = "/expense | /bedtime \n/news | /gemini \n/notion | /steam"
+        message = "/expense | /bedtime \n/news \n/steam"
+        # message = "/expense | /bedtime \n/news | /gemini \n/notion | /steam"
     else:
-        message = "/news | /gemini"
+        message = "/news"
     await update.message.reply_text(message)
 
 
@@ -67,8 +68,7 @@ def get_time():
     days_elapsed = (dt_now - dt_start).days
     days_left = 365 - days_elapsed
 
-    message = f"「 {curr_date} 」\n"
-    message += f"「 {days_elapsed + 1} / 365 」\n"
+    message = f"「 {curr_date} | {days_elapsed + 1} / 365 ({round((days_elapsed + 1) / 365 * 100, 0)}%) 」\n"
     message += f"「 今年の終わり 後 {days_left}日 」\n"
     message += f"「 今日の終わり 後 {time_left} 」\n"
     return message

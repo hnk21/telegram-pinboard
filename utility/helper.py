@@ -109,9 +109,10 @@ steam_id = os.getenv("STEAM_ID")
 gemini_token = os.getenv("GEMINI_API_TOKEN")
 
 # -------------------------------------------------- #
-# standard.py > get_time()                           #
+# date time variables                                #
 # -------------------------------------------------- #
 
+# standard.py > get_time()
 weekdays_en_jp = {"Monday"   : "月",
                   "Tuesday"  : "火",
                   "Wednesday": "水",
@@ -119,6 +120,12 @@ weekdays_en_jp = {"Monday"   : "月",
                   "Friday"   : "金",
                   "Saturday" : "土",
                   "Sunday"   : "日"}
+
+month_name = {"01": "Jan", "02": "Feb", "03": "Mar",
+              "04": "Apr", "05": "May", "06": "Jun",
+              "07": "Jul", "08": "Aug", "09": "Sep",
+              "10": "Oct", "11": "Nov", "12": "Dec"
+              }
 
 # -------------------------------------------------- #
 # data folder > file variables                       #
